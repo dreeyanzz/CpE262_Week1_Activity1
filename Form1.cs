@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Text.RegularExpressions;
+using CustomControls;
 
 namespace calculator
 {
@@ -8,9 +9,33 @@ namespace calculator
         #region Constants
         private const int BUTTON_SIZE = 70;
         private const int PADDING = 15;
-        private const int MAX_DISPLAY_LENGTH = 16;
+        private const int MAX_DISPLAY_LENGTH = 13;
         private const int LABEL_FONT_SIZE = 28;
         private const int BUTTON_FONT_SIZE = 16;
+
+        private static readonly Dictionary<string, string> imagePathMap = new()
+        {
+            { "1", "1.png" },
+            { "2", "2.png" },
+            { "3", "3.png" },
+            { "4", "4.png" },
+            { "5", "5.png" },
+            { "6", "6.png" },
+            { "7", "7.png" },
+            { "8", "8.png" },
+            { "9", "9.png" },
+            { "0", "0.png" },
+            { "+", "plus.png" },
+            { "-", "minus.png" },
+            { "×", "multiply.png" },
+            { "÷", "divide.png" },
+            { "AC", "AC.png" },
+            { "Ans", "Ans.png" },
+            { "n²", "n².png" },
+            { "⌫", "⌫.png" },
+            { "=", "=.png" },
+            { ".", "dot.png" },
+        };
         #endregion
 
         #region Button Layout
@@ -78,6 +103,10 @@ namespace calculator
         public Window()
         {
             InitializeComponent();
+
+            ClientSize = new Size(540, 910);
+            Text = $"{Size.Width}x{Size.Height}";
+
             InitializeLabel(stmt_label, Statement);
             InitializeLabel(answer_label, Answer);
         }
@@ -85,19 +114,17 @@ namespace calculator
         private void InitializeLabel(Label label, Panel parent)
         {
             label.Text = label == stmt_label ? "0" : "";
-            label.Font = new Font("Segoe UI", LABEL_FONT_SIZE, FontStyle.Regular);
+            label.Font = new Font("Inter", LABEL_FONT_SIZE, FontStyle.Regular);
             label.ForeColor = Color.White;
             label.AutoSize = false;
             label.TextAlign = ContentAlignment.MiddleRight;
             label.Size = new Size(parent.Width - 20, parent.Height - 20);
-            label.Location = new Point(10, (parent.Height - label.Height) / 2);
+            label.Location = new Point(10, (parent.Height - label.Height) / 2 - 8);
         }
         #endregion
 
         #region Event Handlers - Paint
         private void Form1_Load(object sender, EventArgs e) { }
-
-        private void Screen_Paint(object sender, PaintEventArgs e) { }
 
         private void Statement_Paint(object sender, PaintEventArgs e)
         {
@@ -116,7 +143,7 @@ namespace calculator
             if (sender is not Panel kb)
                 return;
 
-            CreateKeyboardButtons(kb);
+            CreateKeyboardButtons(kb); // ❌ This runs EVERY paint! Will create duplicate buttons!
         }
         #endregion
 
@@ -138,28 +165,44 @@ namespace calculator
             }
         }
 
-        private Button CreateButton(string text, int x, int y)
+        private ImageButton CreateButton(string text, int x, int y)
         {
-            Color btnColor = GetButtonColor(text);
+            ImageButton btn = new();
+            btn.Text = text;
+            btn.Location = new Point(x - 8, y - 8);
 
-            Button btn = new()
+            Image? img = GetButtonImage(text);
+            if (img != null)
             {
-                Text = text,
-                Location = new Point(x, y),
-                Size = new Size(BUTTON_SIZE, BUTTON_SIZE),
-                BackColor = btnColor,
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", BUTTON_FONT_SIZE, FontStyle.Regular),
-                Margin = new Padding(0),
-                TextAlign = ContentAlignment.MiddleCenter,
-                Cursor = Cursors.Hand,
-                FlatStyle = FlatStyle.Standard,
-            };
+                btn.NormalImage = img;
+                btn.Size = new Size(img.Width, img.Height); // Explicit size from image
+                btn.ShowText = false;
+            }
 
-            ConfigureButtonAppearance(btn, btnColor);
             btn.Click += Button_Click!;
-
             return btn;
+        }
+
+        private const string IMAGE_FOLDER = "keyboard-keys";
+
+        public static Image? GetButtonImage(string buttonText)
+        {
+            if (
+                imagePathMap.TryGetValue(buttonText, out string? path)
+                && !string.IsNullOrEmpty(path)
+            )
+            {
+                string fullPath = Path.Combine(IMAGE_FOLDER, path);
+                if (File.Exists(fullPath))
+                {
+                    return Image.FromFile(fullPath);
+                }
+                else
+                {
+                    Console.WriteLine($"Image not found: {fullPath}");
+                }
+            }
+            return null;
         }
 
         private void ConfigureButtonAppearance(Button btn, Color baseColor)
@@ -276,7 +319,7 @@ namespace calculator
         #region Event Handlers - Button Click
         private void Button_Click(object sender, EventArgs e)
         {
-            if (sender is not Button btn)
+            if (sender is not ImageButton btn)
                 return;
 
             RouteButtonAction(btn.Text);

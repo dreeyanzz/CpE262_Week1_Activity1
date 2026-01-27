@@ -28,59 +28,60 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Window));
+            Keyboard = new Panel();
             Screen = new Panel();
             Answer = new Panel();
             Statement = new Panel();
-            Keyboard = new Panel();
             Screen.SuspendLayout();
             SuspendLayout();
             // 
+            // Keyboard
+            // 
+            Keyboard.BackgroundImage = (Image)resources.GetObject("Keyboard.BackgroundImage");
+            Keyboard.Location = new Point(21, 277);
+            Keyboard.Name = "Keyboard";
+            Keyboard.Size = new Size(490, 602);
+            Keyboard.TabIndex = 3;
+            Keyboard.Paint += Keyboard_Paint;
+            // 
             // Screen
             // 
-            Screen.BackColor = Color.FromArgb(172, 128, 128);
+            Screen.BackColor = Color.Transparent;
+            Screen.BackgroundImage = (Image)resources.GetObject("Screen.BackgroundImage");
             Screen.Controls.Add(Answer);
             Screen.Controls.Add(Statement);
-            Screen.Location = new Point(45, 33);
+            Screen.Location = new Point(21, 39);
             Screen.Name = "Screen";
-            Screen.Size = new Size(493, 220);
-            Screen.TabIndex = 0;
-            Screen.Paint += Screen_Paint;
+            Screen.Size = new Size(490, 230);
+            Screen.TabIndex = 4;
             // 
             // Answer
             // 
-            Answer.BackColor = Color.FromArgb(113, 119, 110);
-            Answer.Location = new Point(17, 128);
+            Answer.BackgroundImage = (Image)resources.GetObject("Answer.BackgroundImage");
+            Answer.Location = new Point(18, 139);
             Answer.Name = "Answer";
-            Answer.Size = new Size(458, 76);
+            Answer.Size = new Size(454, 73);
             Answer.TabIndex = 1;
             Answer.Paint += Answer_Paint;
             // 
             // Statement
             // 
-            Statement.BackColor = Color.FromArgb(113, 119, 110);
-            Statement.Location = new Point(17, 14);
+            Statement.BackgroundImage = (Image)resources.GetObject("Statement.BackgroundImage");
+            Statement.Location = new Point(18, 18);
             Statement.Name = "Statement";
-            Statement.Size = new Size(458, 108);
+            Statement.Size = new Size(454, 120);
             Statement.TabIndex = 0;
             Statement.Paint += Statement_Paint;
-            // 
-            // Keyboard
-            // 
-            Keyboard.BackColor = Color.FromArgb(172, 128, 128);
-            Keyboard.Location = new Point(45, 277);
-            Keyboard.Name = "Keyboard";
-            Keyboard.Size = new Size(493, 545);
-            Keyboard.TabIndex = 2;
-            Keyboard.Paint += Keyboard_Paint;
             // 
             // Window
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(116, 77, 77);
-            ClientSize = new Size(582, 853);
-            Controls.Add(Keyboard);
+            ClientSize = new Size(540, 910);
             Controls.Add(Screen);
+            Controls.Add(Keyboard);
             Name = "Window";
             Text = "Calculator";
             Load += Form1_Load;
@@ -89,10 +90,9 @@
         }
 
         #endregion
-
-        private Panel Screen;
-        private Panel Answer;
-        private Panel Statement;
         private Panel Keyboard;
+        private Panel Screen;
+        private Panel Statement;
+        private Panel Answer;
     }
 }
