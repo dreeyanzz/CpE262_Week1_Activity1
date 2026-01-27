@@ -8,7 +8,7 @@ namespace calculator
         #region Constants
         private const int BUTTON_SIZE = 70;
         private const int PADDING = 15;
-        private const int MAX_DISPLAY_LENGTH = 18;
+        private const int MAX_DISPLAY_LENGTH = 16;
         private const int LABEL_FONT_SIZE = 28;
         private const int BUTTON_FONT_SIZE = 16;
         #endregion
@@ -60,6 +60,8 @@ namespace calculator
             "9",
         ];
         #endregion
+
+        List<Panel> numKeys = [];
 
         #region UI Components
         private readonly Label stmt_label = new();
@@ -151,7 +153,7 @@ namespace calculator
                 Margin = new Padding(0),
                 TextAlign = ContentAlignment.MiddleCenter,
                 Cursor = Cursors.Hand,
-                FlatStyle = FlatStyle.Flat,
+                FlatStyle = FlatStyle.Standard,
             };
 
             ConfigureButtonAppearance(btn, btnColor);
@@ -202,7 +204,6 @@ namespace calculator
         {
             fullExpression = "0";
             answer_label.Text = "";
-            lastResult = 0.0;
             justCalculated = false;
             UpdateDisplay();
         }
@@ -305,13 +306,23 @@ namespace calculator
         }
         #endregion
 
-        #region Input Handlers
+        #region Input Handlers]
         private void HandleDisplayableInput(string input)
         {
-            // If just calculated and user types a number or decimal, start fresh
-            if (justCalculated && (numbers.Contains(input) || input == "."))
+            if (input == "-" && stmt_label.Text == "0")
             {
-                fullExpression = "0";
+                stmt_label.Text = "-";
+                fullExpression = "-";
+                return;
+            }
+
+            // If just calculated and user types a number or decimal, start fresh
+            if (
+                justCalculated
+                && (numbers.Contains(input) || input == "." || operators.Contains(input))
+            )
+            {
+                fullExpression = answer_label.Text;
                 answer_label.Text = "";
                 justCalculated = false;
             }
@@ -368,6 +379,7 @@ namespace calculator
         {
             fullExpression = fullExpression.Length <= 1 ? "0" : fullExpression[..^1];
             justCalculated = false;
+            answer_label.Text = "";
             UpdateDisplay();
         }
 
@@ -440,8 +452,8 @@ namespace calculator
             expression = ProcessSquares(expression);
             expression = NormalizeOperators(expression);
 
-            // Remove trailing operators before evaluation
-            expression = Regex.Replace(expression, @"[+\-*/]+$", "");
+            //// Remove trailing operators before evaluation
+            // expression = Regex.Replace(expression, @"[+\-*/]+$", "");
 
             object result = new DataTable().Compute(expression, null);
             return Convert.ToDouble(result);
