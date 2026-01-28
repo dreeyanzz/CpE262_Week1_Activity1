@@ -105,7 +105,6 @@ namespace calculator
             InitializeComponent();
 
             ClientSize = new Size(540, 910);
-            Text = $"{Size.Width}x{Size.Height}";
 
             InitializeLabel(stmt_label, Statement);
             InitializeLabel(answer_label, Answer);
