@@ -205,33 +205,6 @@ namespace calculator
             return null;
         }
 
-        private void ConfigureButtonAppearance(Button btn, Color baseColor)
-        {
-            btn.FlatAppearance.BorderSize = 0;
-            btn.FlatAppearance.MouseOverBackColor = AdjustBrightness(baseColor, 1.2f);
-            btn.FlatAppearance.MouseDownBackColor = AdjustBrightness(baseColor, 0.8f);
-        }
-
-        private Color GetButtonColor(string text)
-        {
-            return text switch
-            {
-                "AC" => Color.FromArgb(220, 60, 60),
-                "⌫" => Color.FromArgb(220, 140, 60),
-                "=" => Color.FromArgb(80, 140, 220),
-                _ when operators.Contains(text) => Color.FromArgb(240, 140, 60),
-                _ when numbers.Contains(text) || text == "." => Color.FromArgb(70, 70, 80),
-                _ => Color.FromArgb(90, 90, 100),
-            };
-        }
-
-        private static Color AdjustBrightness(Color color, float factor)
-        {
-            int r = (int)Math.Min(255, color.R * factor);
-            int g = (int)Math.Min(255, color.G * factor);
-            int b = (int)Math.Min(255, color.B * factor);
-            return Color.FromArgb(r, g, b);
-        }
         #endregion
 
         #region Display Management
@@ -327,6 +300,11 @@ namespace calculator
 
         private void RouteButtonAction(string buttonText)
         {
+            if (buttonText != "=" && !operators.Contains(buttonText))
+            {
+                answer_label.Text = "";
+            }
+
             switch (buttonText)
             {
                 case "AC":
@@ -378,7 +356,11 @@ namespace calculator
                 newText = trimmed + input;
             }
 
-            if (IsValidStatement(newText))
+            if (
+                IsValidStatement(newText)
+                || (newText.Last().ToString() == "-")
+                || (newText[^2].ToString() == "-")
+            )
             {
                 fullExpression = newText;
 
