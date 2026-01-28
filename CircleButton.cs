@@ -159,11 +159,14 @@ namespace CustomControls
             this.Font = new Font("Inter", 24, FontStyle.Bold); // Larger default font like in Figma
 
             // Enable double buffering to reduce flickering
-            this.SetStyle(ControlStyles.UserPaint |
-                         ControlStyles.AllPaintingInWmPaint |
-                         ControlStyles.OptimizedDoubleBuffer |
-                         ControlStyles.ResizeRedraw |
-                         ControlStyles.SupportsTransparentBackColor, true);
+            this.SetStyle(
+                ControlStyles.UserPaint
+                    | ControlStyles.AllPaintingInWmPaint
+                    | ControlStyles.OptimizedDoubleBuffer
+                    | ControlStyles.ResizeRedraw
+                    | ControlStyles.SupportsTransparentBackColor,
+                true
+            );
 
             this.UpdateStyles();
         }
