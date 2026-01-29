@@ -39,9 +39,10 @@
             // Keyboard
             // 
             Keyboard.BackgroundImage = (Image)resources.GetObject("Keyboard.BackgroundImage");
-            Keyboard.Location = new Point(21, 277);
+            Keyboard.Location = new Point(18, 208);
+            Keyboard.Margin = new Padding(3, 2, 3, 2);
             Keyboard.Name = "Keyboard";
-            Keyboard.Size = new Size(490, 602);
+            Keyboard.Size = new Size(429, 1000);
             Keyboard.TabIndex = 3;
             Keyboard.Paint += Keyboard_Paint;
             // 
@@ -51,37 +52,41 @@
             Screen.BackgroundImage = (Image)resources.GetObject("Screen.BackgroundImage");
             Screen.Controls.Add(Answer);
             Screen.Controls.Add(Statement);
-            Screen.Location = new Point(21, 39);
+            Screen.Location = new Point(18, 29);
+            Screen.Margin = new Padding(3, 2, 3, 2);
             Screen.Name = "Screen";
-            Screen.Size = new Size(490, 230);
+            Screen.Size = new Size(429, 172);
             Screen.TabIndex = 4;
             // 
             // Answer
             // 
             Answer.BackgroundImage = (Image)resources.GetObject("Answer.BackgroundImage");
-            Answer.Location = new Point(18, 139);
+            Answer.Location = new Point(16, 104);
+            Answer.Margin = new Padding(3, 2, 3, 2);
             Answer.Name = "Answer";
-            Answer.Size = new Size(454, 73);
+            Answer.Size = new Size(397, 55);
             Answer.TabIndex = 1;
             Answer.Paint += Answer_Paint;
             // 
             // Statement
             // 
             Statement.BackgroundImage = (Image)resources.GetObject("Statement.BackgroundImage");
-            Statement.Location = new Point(18, 18);
+            Statement.Location = new Point(16, 14);
+            Statement.Margin = new Padding(3, 2, 3, 2);
             Statement.Name = "Statement";
-            Statement.Size = new Size(454, 120);
+            Statement.Size = new Size(397, 90);
             Statement.TabIndex = 0;
             Statement.Paint += Statement_Paint;
             // 
             // Window
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(116, 77, 77);
-            ClientSize = new Size(540, 910);
+            ClientSize = new Size(472, 634);
             Controls.Add(Screen);
             Controls.Add(Keyboard);
+            Margin = new Padding(3, 2, 3, 2);
             Name = "Window";
             Text = "Calculator";
             Load += Form1_Load;

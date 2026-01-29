@@ -13,6 +13,9 @@ namespace calculator
         private const int LABEL_FONT_SIZE = 28;
         private const int BUTTON_FONT_SIZE = 16;
 
+        private readonly List<string> stmt_history = [];
+        private int stmt_index = -1;
+
         private static readonly Dictionary<string, string> imagePathMap = new()
         {
             { "1", "1.png" },
@@ -35,6 +38,8 @@ namespace calculator
             { "⌫", "⌫.png" },
             { "=", "=.png" },
             { ".", "dot.png" },
+            { "^", "up_button.png" },
+            { "v", "down_button.png" },
         };
         #endregion
 
@@ -104,7 +109,7 @@ namespace calculator
         {
             InitializeComponent();
 
-            ClientSize = new Size(540, 910);
+            ClientSize = new Size(536, 940);
 
             InitializeLabel(stmt_label, Statement);
             InitializeLabel(answer_label, Answer);
@@ -142,6 +147,9 @@ namespace calculator
             if (sender is not Panel kb)
                 return;
 
+            Keyboard.Location = new Point(Keyboard.Location.X, 270);
+            Keyboard.Size = new Size(Screen.Size.Width, 662);
+
             CreateKeyboardButtons(kb); // ❌ This runs EVERY paint! Will create duplicate buttons!
         }
         #endregion
@@ -149,8 +157,8 @@ namespace calculator
         #region Button Creation
         private void CreateKeyboardButtons(Panel keyboard)
         {
-            int workWidth = keyboard.Width - PADDING * 2;
-            int workHeight = keyboard.Height - PADDING * 2;
+            int workWidth = Keyboard.Size.Width - PADDING * 2;
+            int workHeight = Keyboard.Size.Height - PADDING * 2 - 60;
 
             for (int row = 0; row < keys.Count; row++)
             {
@@ -159,9 +167,12 @@ namespace calculator
                     int posX = PADDING + workWidth / 4 * col + PADDING;
                     int posY = PADDING + workHeight / 5 * row + PADDING;
 
-                    keyboard.Controls.Add(CreateButton(keys[row][col], posX, posY));
+                    keyboard.Controls.Add(CreateButton(keys[row][col], posX, posY + 60));
                 }
             }
+
+            keyboard.Controls.Add(CreateButton("^", 130 + 8, 8 + 8));
+            keyboard.Controls.Add(CreateButton("v", 245 + 8, 8 + 8));
         }
 
         private ImageButton CreateButton(string text, int x, int y)
@@ -304,6 +315,19 @@ namespace calculator
                 answer_label.Text = "";
             }
 
+            if (buttonText == "^")
+            {
+                HandleUpArrow();
+                return;
+            }
+            else if (buttonText == "v")
+            {
+                HandleDownArrow();
+                return;
+            }
+            else
+                stmt_index = stmt_history.Count;
+
             switch (buttonText)
             {
                 case "AC":
@@ -326,7 +350,28 @@ namespace calculator
         }
         #endregion
 
-        #region Input Handlers]
+        #region Input Handlers
+
+        private void HandleUpArrow()
+        {
+            if (stmt_index - 1 >= 0)
+            {
+                stmt_index--;
+                fullExpression = stmt_history[stmt_index];
+            }
+            UpdateDisplay();
+        }
+
+        private void HandleDownArrow()
+        {
+            if (stmt_index + 1 < stmt_history.Count)
+            {
+                stmt_index++;
+                fullExpression = stmt_history[stmt_index];
+            }
+            UpdateDisplay();
+        }
+
         private void HandleDisplayableInput(string input)
         {
             if (input == "-" && stmt_label.Text == "0")
@@ -434,6 +479,19 @@ namespace calculator
                 {
                     answer_label.Text = FormatResult(lastResult);
                     justCalculated = true;
+
+                    if (stmt_history.Count > 0 && stmt_history[^1] == fullExpression)
+                        return;
+
+                    stmt_history.Add(fullExpression);
+                    stmt_index = stmt_history.Count - 1;
+                    if (stmt_history.Count > 5) // Dequeue oldest if over limit
+                    {
+                        stmt_history.RemoveAt(0);
+                        stmt_index--;
+                    }
+
+                    Console.WriteLine(value: $"History: [{string.Join(", ", stmt_history)}]");
                 }
             }
             catch (DivideByZeroException)
