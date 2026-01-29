@@ -303,6 +303,13 @@ namespace calculator
             // Reset history index for new input
             stmt_index = stmt_history.Count;
 
+            // Block Ans button after n²
+            if (buttonText == "Ans" && fullExpression.EndsWith("²"))
+            {
+                // Do nothing - block the Ans button
+                return;
+            }
+
             // Route to appropriate handler
             switch (buttonText)
             {
@@ -349,12 +356,82 @@ namespace calculator
 
         private void HandleDisplayableInput(string input)
         {
+            // Block invalid input after square
+            // After n², only allow operators (not numbers, not another n², not decimal)
+            if (fullExpression.EndsWith("²"))
+            {
+                // Only operators are allowed after square
+                if (!operators.Contains(input))
+                {
+                    // Block numbers, decimal, another n², Ans, etc.
+                    return;
+                }
+            }
+
             // Handle negative numbers at start
             if (input == "-" && fullExpression == "0")
             {
                 fullExpression = "-";
                 UpdateDisplay();
                 return;
+            }
+
+            // Check if we already have (operator + minus) pattern FIRST
+            // If so, block ALL operator inputs including another minus
+            if (operators.Contains(input) && fullExpression.Length >= 2)
+            {
+                string lastChar = fullExpression[^1].ToString();
+                string secondLastChar = fullExpression[^2].ToString();
+
+                if (operators.Contains(secondLastChar) && lastChar == "-")
+                {
+                    // Pattern like +- or ×- exists, don't allow ANY more operators (including -)
+                    return;
+                }
+            }
+
+            // Handle double minus (convert to positive)
+            // This only runs if we DON'T have the operator+minus pattern from above
+            if (input == "-" && fullExpression.Length >= 1 && fullExpression.EndsWith("-"))
+            {
+                // Check what comes before the minus
+                if (fullExpression.Length == 1)
+                {
+                    // Just a single minus, reset to 0
+                    fullExpression = "0";
+                }
+                else
+                {
+                    // Replace the minus with a plus
+                    fullExpression = fullExpression[..^1] + "+";
+                }
+                UpdateDisplay();
+                return;
+            }
+
+            // Block consecutive operators - ONLY allow +-, ×-, ÷-
+            if (operators.Contains(input))
+            {
+                if (fullExpression.Length >= 1)
+                {
+                    string lastChar = fullExpression[^1].ToString();
+
+                    // If last character is an operator
+                    if (operators.Contains(lastChar))
+                    {
+                        // Only allow minus after +, ×, or ÷
+                        if (
+                            !(
+                                input == "-"
+                                && (lastChar == "+" || lastChar == "×" || lastChar == "÷")
+                            )
+                        )
+                        {
+                            // Block everything else
+                            return;
+                        }
+                    }
+                }
             }
 
             // Handle post-calculation input
@@ -382,18 +459,11 @@ namespace calculator
             if (ShouldTrimBeforeOperator(input))
                 newText = TrimTrailingZeros(fullExpression) + input;
 
-            // Validate and update
-            if (
-                IsValidStatement(newText)
-                || newText.EndsWith("-")
-                || (newText.Length >= 2 && newText[^2] == '-')
-            )
-            {
-                fullExpression = newText;
-                if (!operators.Contains(input))
-                    justCalculated = false;
-                UpdateDisplay();
-            }
+            // Update the expression
+            fullExpression = newText;
+            if (!operators.Contains(input))
+                justCalculated = false;
+            UpdateDisplay();
         }
 
         private string BuildNewExpression(string input)
@@ -408,7 +478,9 @@ namespace calculator
         }
 
         private bool ShouldTrimBeforeOperator(string input) =>
-            operators.Contains(input) && fullExpression.EndsWith('0');
+            operators.Contains(input)
+            && fullExpression.Contains('.')
+            && fullExpression.EndsWith('0');
 
         private void HandleBackspace()
         {
@@ -498,8 +570,17 @@ namespace calculator
         {
             expression = ProcessSquares(expression);
             expression = NormalizeOperators(expression);
+            expression = EnsureDoubleOperands(expression);
             object result = new DataTable().Compute(expression, null);
             return Convert.ToDouble(result);
+        }
+
+        private static string EnsureDoubleOperands(string expression)
+        {
+            // Match integers that are NOT part of a decimal number or scientific notation
+            // Negative lookbehind: (?<![.\deE+\-]) - not after decimal, digit, e/E, or +/- (for exponents)
+            // Negative lookahead: (?![.\deE]) - not before decimal, digit, or e/E
+            return Regex.Replace(expression, @"(?<![.\deE+\-])(\d+)(?![.\deE])", "$1.0");
         }
 
         private static string ProcessSquares(string expression) =>
@@ -508,15 +589,43 @@ namespace calculator
                 @"(\d+(?:\.\d+)?)²",
                 m =>
                 {
-                    double num = double.Parse(m.Groups[1].Value);
-                    return (num * num).ToString();
+                    if (!double.TryParse(m.Groups[1].Value, out double num))
+                        return m.Value; // Return original if parsing fails
+                    double result = num * num;
+                    // Check for overflow/infinity
+                    if (double.IsInfinity(result) || double.IsNaN(result))
+                        throw new OverflowException("Square operation resulted in overflow");
+                    return result.ToString("G17"); // Use full precision
                 }
             );
 
         private static string NormalizeOperators(string expression) =>
             expression.Replace("×", "*").Replace("÷", "/");
 
-        private static string FormatResult(double result) => result.ToString();
+        private static string FormatResult(double result)
+        {
+            Debug.WriteLine($"FormatResult: input={result}");
+
+            // Handle -0 case (make it 0)
+            if (Math.Abs(result) < 0.000000001)
+            {
+                return "0";
+            }
+
+            // Check if the result is effectively a whole number
+            if (Math.Abs(result - Math.Round(result)) < 0.000000001)
+            {
+                // It's a whole number, display without decimal
+                return Math.Round(result).ToString("F0");
+            }
+            else
+            {
+                // It has decimals, show them but clean up trailing zeros
+                string formatted = result.ToString("G15"); // Use G15 for good precision
+                Debug.WriteLine($"  Formatted as G15: {formatted}");
+                return formatted;
+            }
+        }
         #endregion
     }
 }
