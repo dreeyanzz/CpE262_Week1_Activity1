@@ -10,7 +10,7 @@ namespace calculator
         #region Constants
         private const int BUTTON_SIZE = 70;
         private const int PADDING = 15;
-        private const int MAX_DISPLAY_LENGTH = 13;
+        private const int MAX_DISPLAY_LENGTH = 14;
         private const int LABEL_FONT_SIZE = 28;
         private const int BUTTON_FONT_SIZE = 16;
         private const int WINDOW_WIDTH = 536;
@@ -448,6 +448,18 @@ namespace calculator
                     fullExpression += "0";
             }
 
+            // Block multiple decimals in current number
+            if (input == ".")
+            {
+                // Get the current number being typed (after last operator or from start)
+                string currentNumber = GetCurrentNumber(fullExpression);
+                if (currentNumber.Contains('.'))
+                {
+                    // Already has a decimal point, block it
+                    return;
+                }
+            }
+
             // Auto-add zero before decimal after operator
             if (input == "." && !numbers.Contains(fullExpression.Last().ToString()))
                 fullExpression += "0";
@@ -481,6 +493,33 @@ namespace calculator
             operators.Contains(input)
             && fullExpression.Contains('.')
             && fullExpression.EndsWith('0');
+
+        private string GetCurrentNumber(string expression)
+        {
+            // Find the last operator position
+            int lastOperatorIndex = -1;
+            for (int i = expression.Length - 1; i >= 0; i--)
+            {
+                if (operators.Contains(expression[i].ToString()))
+                {
+                    // Skip if it's a minus sign after another operator (negative number)
+                    if (
+                        i > 0
+                        && expression[i] == '-'
+                        && operators.Contains(expression[i - 1].ToString())
+                    )
+                        continue;
+                    // Skip if it's a minus at the start (negative number)
+                    if (i == 0 && expression[i] == '-')
+                        continue;
+                    lastOperatorIndex = i;
+                    break;
+                }
+            }
+
+            // Return substring after last operator, or entire expression if no operator
+            return lastOperatorIndex == -1 ? expression : expression[(lastOperatorIndex + 1)..];
+        }
 
         private void HandleBackspace()
         {
