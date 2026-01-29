@@ -8,9 +8,9 @@ namespace CustomControls
 {
     public class ImageButton : UserControl
     {
-        private Image normalImage;
-        private Image hoverImage;
-        private Image pressedImage;
+        private Image? normalImage;
+        private Image? hoverImage;
+        private Image? pressedImage;
         private bool isHovering = false;
         private bool isPressed = false;
         private string buttonText = "";
@@ -21,13 +21,13 @@ namespace CustomControls
         private bool autoSizeToImage = false;
 
         // Events
-        public event EventHandler Click;
+        public new event EventHandler? Click;
 
         [Category("Appearance")]
         [Description("The image to display in normal state")]
         [Browsable(true)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
-        public Image NormalImage
+        public Image? NormalImage
         {
             get { return normalImage; }
             set
@@ -45,7 +45,7 @@ namespace CustomControls
         [Description("The image to display when hovering")]
         [Browsable(true)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
-        public Image HoverImage
+        public Image? HoverImage
         {
             get { return hoverImage; }
             set
@@ -59,7 +59,7 @@ namespace CustomControls
         [Description("The image to display when pressed")]
         [Browsable(true)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
-        public Image PressedImage
+        public Image? PressedImage
         {
             get { return pressedImage; }
             set
@@ -130,7 +130,7 @@ namespace CustomControls
         [Description("Text data associated with this button (not displayed)")]
         [Browsable(true)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
-        public string Text
+        public new string Text
         {
             get { return text; }
             set { text = value; }
@@ -186,7 +186,7 @@ namespace CustomControls
             g.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
             // Determine which image to draw
-            Image imageToDraw = normalImage;
+            Image? imageToDraw = normalImage;
 
             if (isPressed && pressedImage != null)
                 imageToDraw = pressedImage;

@@ -75,7 +75,7 @@ namespace CustomControls
                 using (
                     GraphicsPath pathBorder = GetFigurePath(rectBorder, _cornerRadius - _borderSize)
                 )
-                using (Pen penSurface = new Pen(Parent.BackColor, smoothSize))
+                using (Pen penSurface = new Pen(Parent?.BackColor ?? Color.Transparent, smoothSize))
                 using (Pen penBorder = new Pen(_borderColor, _borderSize))
                 {
                     Region = new Region(pathSurface);

@@ -135,17 +135,6 @@ namespace CustomControls
             }
         }
 
-        // Override Font property to trigger redraw
-        public override Font Font
-        {
-            get { return base.Font; }
-            set
-            {
-                base.Font = value;
-                Invalidate();
-            }
-        }
-
         // Constructor
         public CircleButton()
         {
@@ -242,7 +231,8 @@ namespace CustomControls
 
                     // Draw text in the button area
                     RectangleF textRect = new RectangleF(0, 0, drawSize, drawSize);
-                    graphics.DrawString(Text, Font, textBrush, textRect, stringFormat);
+                    Font fontToUse = Font ?? new Font("Inter", 24, FontStyle.Bold);
+                    graphics.DrawString(Text, fontToUse, textBrush, textRect, stringFormat);
                 }
             }
         }
