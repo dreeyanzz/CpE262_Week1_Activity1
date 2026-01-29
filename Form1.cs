@@ -345,6 +345,11 @@ namespace calculator
                 fullExpression = answer_label.Text;
                 answer_label.Text = "";
                 justCalculated = false;
+
+                if (input == ".")
+                {
+                    fullExpression += "0";
+                }
             }
 
             string newText = BuildNewExpression(input);
