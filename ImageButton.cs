@@ -35,9 +35,9 @@ namespace CustomControls
                 normalImage = value;
                 if (autoSizeToImage && normalImage != null)
                 {
-                    this.Size = normalImage.Size;
+                    Size = normalImage.Size;
                 }
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -51,7 +51,7 @@ namespace CustomControls
             set
             {
                 hoverImage = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -65,7 +65,7 @@ namespace CustomControls
             set
             {
                 pressedImage = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -79,7 +79,7 @@ namespace CustomControls
             set
             {
                 buttonText = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -93,7 +93,7 @@ namespace CustomControls
             set
             {
                 textFont = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -107,7 +107,7 @@ namespace CustomControls
             set
             {
                 textColor = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -122,7 +122,7 @@ namespace CustomControls
             set
             {
                 showText = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -149,19 +149,19 @@ namespace CustomControls
                 autoSizeToImage = value;
                 if (autoSizeToImage && normalImage != null)
                 {
-                    this.Size = normalImage.Size;
+                    Size = normalImage.Size;
                 }
-                this.Invalidate();
+                Invalidate();
             }
         }
 
         public ImageButton()
         {
-            this.Size = new Size(100, 100);
-            this.BackColor = Color.Transparent; // ✅ Make background transparent!
+            Size = new Size(100, 100);
+            BackColor = Color.Transparent; // ✅ Make background transparent!
 
             // Enable double buffering
-            this.SetStyle(
+            SetStyle(
                 ControlStyles.UserPaint
                     | ControlStyles.AllPaintingInWmPaint
                     | ControlStyles.OptimizedDoubleBuffer
@@ -172,8 +172,8 @@ namespace CustomControls
                 true
             );
 
-            this.DoubleBuffered = true;
-            this.UpdateStyles();
+            DoubleBuffered = true;
+            UpdateStyles();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -213,7 +213,7 @@ namespace CustomControls
                         buttonText,
                         textFont,
                         textBrush,
-                        new RectangleF(0, 0, this.Width, this.Height),
+                        new RectangleF(0, 0, Width, Height),
                         sf
                     );
                 }
@@ -224,8 +224,8 @@ namespace CustomControls
         {
             base.OnMouseEnter(e);
             isHovering = true;
-            this.Cursor = Cursors.Hand;
-            this.Invalidate();
+            Cursor = Cursors.Hand;
+            Invalidate();
         }
 
         protected override void OnMouseLeave(EventArgs e)
@@ -233,7 +233,7 @@ namespace CustomControls
             base.OnMouseLeave(e);
             isHovering = false;
             isPressed = false;
-            this.Invalidate();
+            Invalidate();
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -242,7 +242,7 @@ namespace CustomControls
             if (e.Button == MouseButtons.Left)
             {
                 isPressed = true;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -252,10 +252,10 @@ namespace CustomControls
             if (e.Button == MouseButtons.Left)
             {
                 isPressed = false;
-                this.Invalidate();
+                Invalidate();
 
                 // Trigger click event if mouse is still over the button
-                if (this.ClientRectangle.Contains(e.Location))
+                if (ClientRectangle.Contains(e.Location))
                 {
                     Click?.Invoke(this, EventArgs.Empty);
                 }

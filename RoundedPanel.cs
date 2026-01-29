@@ -22,7 +22,7 @@ namespace CustomControls
             set
             {
                 _cornerRadius = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -33,7 +33,7 @@ namespace CustomControls
             set
             {
                 _borderSize = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -44,7 +44,7 @@ namespace CustomControls
             set
             {
                 _borderColor = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -52,9 +52,9 @@ namespace CustomControls
 
         public RoundedPanel()
         {
-            this.DoubleBuffered = true;
-            this.ResizeRedraw = true;
-            this.BackColor = Color.White;
+            DoubleBuffered = true;
+            ResizeRedraw = true;
+            BackColor = Color.White;
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -62,7 +62,7 @@ namespace CustomControls
             base.OnPaint(e);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-            Rectangle rectSurface = this.ClientRectangle;
+            Rectangle rectSurface = ClientRectangle;
             Rectangle rectBorder = Rectangle.Inflate(rectSurface, -_borderSize, -_borderSize);
             int smoothSize = 2;
 
@@ -75,10 +75,10 @@ namespace CustomControls
                 using (
                     GraphicsPath pathBorder = GetFigurePath(rectBorder, _cornerRadius - _borderSize)
                 )
-                using (Pen penSurface = new Pen(this.Parent.BackColor, smoothSize))
+                using (Pen penSurface = new Pen(Parent.BackColor, smoothSize))
                 using (Pen penBorder = new Pen(_borderColor, _borderSize))
                 {
-                    this.Region = new Region(pathSurface);
+                    Region = new Region(pathSurface);
                     e.Graphics.DrawPath(penSurface, pathSurface);
                     if (_borderSize >= 1)
                         e.Graphics.DrawPath(penBorder, pathBorder);
@@ -86,13 +86,13 @@ namespace CustomControls
             }
             else
             {
-                this.Region = new Region(rectSurface);
+                Region = new Region(rectSurface);
                 if (_borderSize >= 1)
                 {
                     using (Pen penBorder = new Pen(_borderColor, _borderSize))
                     {
                         penBorder.Alignment = PenAlignment.Inset;
-                        e.Graphics.DrawRectangle(penBorder, 0, 0, this.Width - 1, this.Height - 1);
+                        e.Graphics.DrawRectangle(penBorder, 0, 0, Width - 1, Height - 1);
                     }
                 }
             }
@@ -122,7 +122,7 @@ namespace CustomControls
         protected override void OnResize(EventArgs eventargs)
         {
             base.OnResize(eventargs);
-            this.Invalidate();
+            Invalidate();
         }
     }
 }

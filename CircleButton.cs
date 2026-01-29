@@ -29,7 +29,7 @@ namespace CustomControls
             set
             {
                 buttonColor = value;
-                this.Invalidate(); // Redraw the button
+                Invalidate(); // Redraw the button
             }
         }
 
@@ -43,7 +43,7 @@ namespace CustomControls
             set
             {
                 buttonBorder = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -57,8 +57,8 @@ namespace CustomControls
             set
             {
                 textColor = value;
-                this.ForeColor = value; // Also update ForeColor for consistency
-                this.Invalidate();
+                ForeColor = value; // Also update ForeColor for consistency
+                Invalidate();
             }
         }
 
@@ -73,7 +73,7 @@ namespace CustomControls
             set
             {
                 borderWidth = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -88,7 +88,7 @@ namespace CustomControls
             set
             {
                 enableShadow = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -103,7 +103,7 @@ namespace CustomControls
             set
             {
                 shadowDepth = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -117,7 +117,7 @@ namespace CustomControls
             set
             {
                 shadowColor = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -127,11 +127,11 @@ namespace CustomControls
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public string ButtonText
         {
-            get { return this.Text; }
+            get { return Text; }
             set
             {
-                this.Text = value;
-                this.Invalidate();
+                Text = value;
+                Invalidate();
             }
         }
 
@@ -142,7 +142,7 @@ namespace CustomControls
             set
             {
                 base.Font = value;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
@@ -150,16 +150,16 @@ namespace CustomControls
         public CircleButton()
         {
             // Set default properties
-            this.Size = new Size(100, 100);
-            this.FlatStyle = FlatStyle.Flat;
-            this.FlatAppearance.BorderSize = 0;
-            this.BackColor = Color.Transparent;
-            this.textColor = Color.White;
-            this.ForeColor = Color.White;
-            this.Font = new Font("Inter", 24, FontStyle.Bold); // Larger default font like in Figma
+            Size = new Size(100, 100);
+            FlatStyle = FlatStyle.Flat;
+            FlatAppearance.BorderSize = 0;
+            BackColor = Color.Transparent;
+            textColor = Color.White;
+            ForeColor = Color.White;
+            Font = new Font("Inter", 24, FontStyle.Bold); // Larger default font like in Figma
 
             // Enable double buffering to reduce flickering
-            this.SetStyle(
+            SetStyle(
                 ControlStyles.UserPaint
                     | ControlStyles.AllPaintingInWmPaint
                     | ControlStyles.OptimizedDoubleBuffer
@@ -168,7 +168,7 @@ namespace CustomControls
                 true
             );
 
-            this.UpdateStyles();
+            UpdateStyles();
         }
 
         // Override OnPaint to draw the circular button
@@ -182,7 +182,7 @@ namespace CustomControls
 
             // Calculate the drawing area (leave space for shadow)
             int shadowOffset = enableShadow ? shadowDepth : 0;
-            int drawSize = Math.Min(this.Width, this.Height) - shadowOffset;
+            int drawSize = Math.Min(Width, Height) - shadowOffset;
             Rectangle buttonRect = new Rectangle(0, 0, drawSize, drawSize);
 
             // Determine button color (lighter when hovering)
@@ -207,7 +207,7 @@ namespace CustomControls
             // Create circular path for the button
             GraphicsPath path = new GraphicsPath();
             path.AddEllipse(buttonRect);
-            this.Region = new Region(path);
+            Region = new Region(path);
 
             // Fill the circle
             using (SolidBrush brush = new SolidBrush(drawColor))
@@ -231,9 +231,9 @@ namespace CustomControls
             }
 
             // Draw the text centered with better quality
-            if (!string.IsNullOrEmpty(this.Text))
+            if (!string.IsNullOrEmpty(Text))
             {
-                using (SolidBrush textBrush = new SolidBrush(this.textColor))
+                using (SolidBrush textBrush = new SolidBrush(textColor))
                 {
                     StringFormat stringFormat = new StringFormat();
                     stringFormat.Alignment = StringAlignment.Center;
@@ -242,7 +242,7 @@ namespace CustomControls
 
                     // Draw text in the button area
                     RectangleF textRect = new RectangleF(0, 0, drawSize, drawSize);
-                    graphics.DrawString(this.Text, this.Font, textBrush, textRect, stringFormat);
+                    graphics.DrawString(Text, Font, textBrush, textRect, stringFormat);
                 }
             }
         }
@@ -252,7 +252,7 @@ namespace CustomControls
         {
             base.OnMouseEnter(e);
             isHovering = true;
-            this.Invalidate(); // Redraw the button
+            Invalidate(); // Redraw the button
         }
 
         // Mouse leave event - for hover effect
@@ -260,7 +260,7 @@ namespace CustomControls
         {
             base.OnMouseLeave(e);
             isHovering = false;
-            this.Invalidate(); // Redraw the button
+            Invalidate(); // Redraw the button
         }
 
         // Helper method to lighten a color (for hover effect)
@@ -277,8 +277,8 @@ namespace CustomControls
         {
             base.OnResize(e);
             // Keep the button circular by making width and height equal
-            int size = Math.Min(this.Width, this.Height);
-            this.Size = new Size(size, size);
+            int size = Math.Min(Width, Height);
+            Size = new Size(size, size);
         }
     }
 }

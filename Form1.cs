@@ -1,4 +1,5 @@
-﻿using System.Data;
+using System.Data;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using CustomControls;
 
@@ -12,10 +13,30 @@ namespace calculator
         private const int MAX_DISPLAY_LENGTH = 13;
         private const int LABEL_FONT_SIZE = 28;
         private const int BUTTON_FONT_SIZE = 16;
+        private const int WINDOW_WIDTH = 536;
+        private const int WINDOW_HEIGHT = 940;
+        private const int KEYBOARD_Y_POSITION = 270;
+        private const int KEYBOARD_HEIGHT = 662;
+        private const int ARROW_BUTTON_OFFSET = 60;
+        private const int MAX_HISTORY_SIZE = 5;
+        private const string IMAGE_FOLDER = "keyboard-keys";
+        #endregion
 
+        #region State Variables
         private readonly List<string> stmt_history = [];
         private int stmt_index = -1;
+        private string fullExpression = "0";
+        private double lastResult = 0.0;
+        private bool justCalculated = false;
+        private bool keyboardInitialized = false; // Prevent duplicate button creation
+        #endregion
 
+        #region UI Components
+        private readonly Label stmt_label = new();
+        private readonly Label answer_label = new();
+        #endregion
+
+        #region Static Data
         private static readonly Dictionary<string, string> imagePathMap = new()
         {
             { "1", "1.png" },
@@ -41,9 +62,7 @@ namespace calculator
             { "^", "up_button.png" },
             { "v", "down_button.png" },
         };
-        #endregion
 
-        #region Button Layout
         private readonly List<List<string>> keys =
         [
             ["AC", "n²", "⌫", "÷"],
@@ -52,9 +71,7 @@ namespace calculator
             ["1", "2", "3", "+"],
             ["0", ".", "Ans", "="],
         ];
-        #endregion
 
-        #region Button Categories
         private readonly HashSet<string> displayable =
         [
             "0",
@@ -74,7 +91,6 @@ namespace calculator
             ".",
             "n²",
         ];
-
         private readonly HashSet<string> operators = ["+", "-", "×", "÷"];
         private readonly HashSet<string> numbers =
         [
@@ -91,34 +107,19 @@ namespace calculator
         ];
         #endregion
 
-        List<Panel> numKeys = [];
-
-        #region UI Components
-        private readonly Label stmt_label = new();
-        private readonly Label answer_label = new();
-        #endregion
-
-        #region State
-        private string fullExpression = "0";
-        private double lastResult = 0.0;
-        private bool justCalculated = false;
-        #endregion
-
         #region Initialization
         public Window()
         {
             InitializeComponent();
-
-            ClientSize = new Size(536, 940);
-
-            InitializeLabel(stmt_label, Statement);
-            InitializeLabel(answer_label, Answer);
+            ClientSize = new Size(WINDOW_WIDTH, WINDOW_HEIGHT);
+            InitializeLabel(stmt_label, Statement, "0");
+            InitializeLabel(answer_label, Answer, "");
         }
 
-        private void InitializeLabel(Label label, Panel parent)
+        private void InitializeLabel(Label label, Panel parent, string initialText)
         {
-            label.Text = label == stmt_label ? "0" : "";
-            label.Font = new Font("Inter", LABEL_FONT_SIZE, FontStyle.Regular);
+            label.Text = initialText;
+            label.Font = new Font("Jetbrains Mono", LABEL_FONT_SIZE, FontStyle.Regular);
             label.ForeColor = Color.White;
             label.AutoSize = false;
             label.TextAlign = ContentAlignment.MiddleRight;
@@ -132,25 +133,25 @@ namespace calculator
 
         private void Statement_Paint(object sender, PaintEventArgs e)
         {
-            if (sender is Panel panel)
+            if (sender is Panel panel && !panel.Controls.Contains(stmt_label))
                 panel.Controls.Add(stmt_label);
         }
 
         private void Answer_Paint(object sender, PaintEventArgs e)
         {
-            if (sender is Panel panel)
+            if (sender is Panel panel && !panel.Controls.Contains(answer_label))
                 panel.Controls.Add(answer_label);
         }
 
         private void Keyboard_Paint(object sender, PaintEventArgs e)
         {
-            if (sender is not Panel kb)
+            if (sender is not Panel kb || keyboardInitialized)
                 return;
 
-            Keyboard.Location = new Point(Keyboard.Location.X, 270);
-            Keyboard.Size = new Size(Screen.Size.Width, 662);
-
-            CreateKeyboardButtons(kb); // ❌ This runs EVERY paint! Will create duplicate buttons!
+            Keyboard.Location = new Point(Keyboard.Location.X, KEYBOARD_Y_POSITION);
+            Keyboard.Size = new Size(Screen.Size.Width, KEYBOARD_HEIGHT);
+            CreateKeyboardButtons(kb);
+            keyboardInitialized = true;
         }
         #endregion
 
@@ -158,34 +159,33 @@ namespace calculator
         private void CreateKeyboardButtons(Panel keyboard)
         {
             int workWidth = Keyboard.Size.Width - PADDING * 2;
-            int workHeight = Keyboard.Size.Height - PADDING * 2 - 60;
+            int workHeight = Keyboard.Size.Height - PADDING * 2 - ARROW_BUTTON_OFFSET;
 
+            // Create main keyboard buttons
             for (int row = 0; row < keys.Count; row++)
             {
                 for (int col = 0; col < keys[row].Count; col++)
                 {
                     int posX = PADDING + workWidth / 4 * col + PADDING;
-                    int posY = PADDING + workHeight / 5 * row + PADDING;
-
-                    keyboard.Controls.Add(CreateButton(keys[row][col], posX, posY + 60));
+                    int posY = PADDING + workHeight / 5 * row + PADDING + ARROW_BUTTON_OFFSET;
+                    keyboard.Controls.Add(CreateButton(keys[row][col], posX, posY));
                 }
             }
 
-            keyboard.Controls.Add(CreateButton("^", 130 + 8, 8 + 8));
-            keyboard.Controls.Add(CreateButton("v", 245 + 8, 8 + 8));
+            // Create arrow buttons
+            keyboard.Controls.Add(CreateButton("^", 138, 16));
+            keyboard.Controls.Add(CreateButton("v", 253, 16));
         }
 
         private ImageButton CreateButton(string text, int x, int y)
         {
-            ImageButton btn = new();
-            btn.Text = text;
-            btn.Location = new Point(x - 8, y - 8);
+            ImageButton btn = new() { Text = text, Location = new Point(x - 8, y - 8) };
 
             Image? img = GetButtonImage(text);
             if (img != null)
             {
                 btn.NormalImage = img;
-                btn.Size = new Size(img.Width, img.Height); // Explicit size from image
+                btn.Size = new Size(img.Width, img.Height);
                 btn.ShowText = false;
             }
 
@@ -193,28 +193,21 @@ namespace calculator
             return btn;
         }
 
-        private const string IMAGE_FOLDER = "keyboard-keys";
-
-        public static Image? GetButtonImage(string buttonText)
+        private static Image? GetButtonImage(string buttonText)
         {
             if (
-                imagePathMap.TryGetValue(buttonText, out string? path)
-                && !string.IsNullOrEmpty(path)
+                !imagePathMap.TryGetValue(buttonText, out string? path)
+                || string.IsNullOrEmpty(path)
             )
-            {
-                string fullPath = Path.Combine(IMAGE_FOLDER, path);
-                if (File.Exists(fullPath))
-                {
-                    return Image.FromFile(fullPath);
-                }
-                else
-                {
-                    Console.WriteLine($"Image not found: {fullPath}");
-                }
-            }
+                return null;
+
+            string fullPath = Path.Combine(IMAGE_FOLDER, path);
+            if (File.Exists(fullPath))
+                return Image.FromFile(fullPath);
+
+            Console.WriteLine($"Image not found: {fullPath}");
             return null;
         }
-
         #endregion
 
         #region Display Management
@@ -222,7 +215,7 @@ namespace calculator
         {
             stmt_label.Text =
                 fullExpression.Length > MAX_DISPLAY_LENGTH
-                    ? fullExpression.Substring(fullExpression.Length - MAX_DISPLAY_LENGTH)
+                    ? fullExpression[^MAX_DISPLAY_LENGTH..]
                     : fullExpression;
         }
 
@@ -238,19 +231,11 @@ namespace calculator
         #region Validation
         private bool IsValidStatement(string text)
         {
-            if (text == "0")
-                return true;
-
-            if (HasConsecutiveOperators(text))
-                return false;
-
-            return ValidateTerms(text);
+            return text == "0" || (!HasConsecutiveOperators(text) && ValidateTerms(text));
         }
 
-        private static bool HasConsecutiveOperators(string text)
-        {
-            return Regex.IsMatch(text, @"[+\-×÷]{2,}");
-        }
+        private static bool HasConsecutiveOperators(string text) =>
+            Regex.IsMatch(text, @"[+\-×÷]{2,}");
 
         private static bool ValidateTerms(string text)
         {
@@ -260,13 +245,10 @@ namespace calculator
             {
                 if (string.IsNullOrEmpty(term))
                     continue;
-
                 if (term.Count(c => c == '.') > 1)
                     return false;
-
                 if (term.Count(c => c == '²') > 1)
                     return false;
-
                 if (!IsSquareAtEnd(term))
                     return false;
             }
@@ -287,51 +269,45 @@ namespace calculator
             if (text == "0" || text.Length <= 1)
                 return text;
 
-            while (text.Length > 1 && text.EndsWith('0'))
-            {
-                text = text[..^1];
-            }
-
-            if (text.Length > 1 && text.EndsWith('.'))
-                text = text[..^1];
-
-            return text;
+            text = text.TrimEnd('0');
+            return text.EndsWith('.') && text.Length > 1 ? text[..^1] : text;
         }
         #endregion
 
         #region Event Handlers - Button Click
         private void Button_Click(object sender, EventArgs e)
         {
-            if (sender is not ImageButton btn)
-                return;
-
-            RouteButtonAction(btn.Text);
+            if (sender is ImageButton btn)
+                RouteButtonAction(btn.Text);
         }
 
         private void RouteButtonAction(string buttonText)
         {
+            // Clear answer label for most inputs
             if (buttonText != "=" && !operators.Contains(buttonText))
-            {
                 answer_label.Text = "";
-            }
 
+            // Handle history navigation
             if (buttonText == "^")
             {
                 HandleUpArrow();
                 return;
             }
-            else if (buttonText == "v")
+
+            if (buttonText == "v")
             {
                 HandleDownArrow();
                 return;
             }
-            else
-                stmt_index = stmt_history.Count;
 
+            // Reset history index for new input
+            stmt_index = stmt_history.Count;
+
+            // Route to appropriate handler
             switch (buttonText)
             {
                 case "AC":
-                    HandleClear();
+                    ClearDisplay();
                     break;
                 case "⌫":
                     HandleBackspace();
@@ -351,37 +327,37 @@ namespace calculator
         #endregion
 
         #region Input Handlers
-
         private void HandleUpArrow()
         {
-            if (stmt_index - 1 >= 0)
+            if (stmt_index > 0)
             {
                 stmt_index--;
                 fullExpression = stmt_history[stmt_index];
+                UpdateDisplay();
             }
-            UpdateDisplay();
         }
 
         private void HandleDownArrow()
         {
-            if (stmt_index + 1 < stmt_history.Count)
+            if (stmt_index < stmt_history.Count - 1)
             {
                 stmt_index++;
                 fullExpression = stmt_history[stmt_index];
+                UpdateDisplay();
             }
-            UpdateDisplay();
         }
 
         private void HandleDisplayableInput(string input)
         {
-            if (input == "-" && stmt_label.Text == "0")
+            // Handle negative numbers at start
+            if (input == "-" && fullExpression == "0")
             {
-                stmt_label.Text = "-";
                 fullExpression = "-";
+                UpdateDisplay();
                 return;
             }
 
-            // If just calculated and user types a number or decimal, start fresh
+            // Handle post-calculation input
             if (
                 justCalculated
                 && (numbers.Contains(input) || input == "." || operators.Contains(input))
@@ -392,38 +368,30 @@ namespace calculator
                 justCalculated = false;
 
                 if (input == ".")
-                {
                     fullExpression += "0";
-                }
             }
 
+            // Auto-add zero before decimal after operator
             if (input == "." && !numbers.Contains(fullExpression.Last().ToString()))
-            {
                 fullExpression += "0";
-            }
 
+            // Build new expression
             string newText = BuildNewExpression(input);
 
+            // Trim zeros before operators
             if (ShouldTrimBeforeOperator(input))
-            {
-                string trimmed = TrimTrailingZeros(fullExpression);
-                newText = trimmed + input;
-            }
+                newText = TrimTrailingZeros(fullExpression) + input;
 
+            // Validate and update
             if (
                 IsValidStatement(newText)
-                || (newText.Last().ToString() == "-")
-                || (newText[^2].ToString() == "-")
+                || newText.EndsWith("-")
+                || (newText.Length >= 2 && newText[^2] == '-')
             )
             {
                 fullExpression = newText;
-
-                // Only reset justCalculated for non-operators
                 if (!operators.Contains(input))
-                {
                     justCalculated = false;
-                }
-
                 UpdateDisplay();
             }
         }
@@ -433,26 +401,14 @@ namespace calculator
             if (input == "n²")
                 return fullExpression + "²";
 
-            if (ShouldReplaceExpression(input))
+            if (fullExpression == "0" && !operators.Contains(input) && input != ".")
                 return input;
 
             return fullExpression + input;
         }
 
-        private bool ShouldReplaceExpression(string input)
-        {
-            return fullExpression == "0" && !operators.Contains(input) && input != ".";
-        }
-
-        private bool ShouldTrimBeforeOperator(string input)
-        {
-            return operators.Contains(input) && fullExpression.EndsWith('0');
-        }
-
-        private void HandleClear()
-        {
-            ClearDisplay();
-        }
+        private bool ShouldTrimBeforeOperator(string input) =>
+            operators.Contains(input) && fullExpression.EndsWith('0');
 
         private void HandleBackspace()
         {
@@ -468,73 +424,72 @@ namespace calculator
             {
                 lastResult = EvaluateExpression(fullExpression);
 
-                // Check for invalid results (NaN, Infinity)
                 if (double.IsNaN(lastResult) || double.IsInfinity(lastResult))
                 {
                     answer_label.Text = "Math Error";
                     justCalculated = false;
                     lastResult = 0.0;
+                    return;
                 }
-                else
-                {
-                    answer_label.Text = FormatResult(lastResult);
-                    justCalculated = true;
 
-                    if (stmt_history.Count > 0 && stmt_history[^1] == fullExpression)
-                        return;
-
-                    stmt_history.Add(fullExpression);
-                    stmt_index = stmt_history.Count - 1;
-                    if (stmt_history.Count > 5) // Dequeue oldest if over limit
-                    {
-                        stmt_history.RemoveAt(0);
-                        stmt_index--;
-                    }
-
-                    Console.WriteLine(value: $"History: [{string.Join(", ", stmt_history)}]");
-                }
+                answer_label.Text = FormatResult(result: lastResult);
+                justCalculated = true;
             }
-            catch (DivideByZeroException)
+            catch (DivideByZeroException e)
             {
                 answer_label.Text = "Cannot divide by zero";
-                justCalculated = false;
-                lastResult = 0.0;
+                ResetCalculationState();
+
+                Debug.WriteLine(e);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                answer_label.Text = "Error";
-                justCalculated = false;
-                lastResult = 0.0;
+                answer_label.Text = $"Error";
+                ResetCalculationState();
+                Debug.WriteLine(e);
             }
+
+            AddToHistory(expression: fullExpression);
+        }
+
+        private void AddToHistory(string expression)
+        {
+            // Don't add duplicates
+            if (stmt_history.Count > 0 && stmt_history[^1] == expression)
+                return;
+
+            stmt_history.Add(expression);
+            stmt_index = stmt_history.Count - 1;
+
+            // Maintain max history size
+            if (stmt_history.Count > MAX_HISTORY_SIZE)
+            {
+                stmt_history.RemoveAt(0);
+                stmt_index--;
+            }
+
+            Console.WriteLine($"History: [{string.Join(", ", stmt_history)}]");
+        }
+
+        private void ResetCalculationState()
+        {
+            justCalculated = false;
+            lastResult = 0.0;
         }
 
         private void HandleAnswer()
         {
+            fullExpression = justCalculated
+                ? lastResult.ToString()
+                : (fullExpression == "0" ? lastResult.ToString() : fullExpression + lastResult);
+
             if (justCalculated)
             {
-                ReplaceWithLastResult();
-            }
-            else
-            {
-                AppendLastResult();
+                answer_label.Text = "";
+                justCalculated = false;
             }
 
             UpdateDisplay();
-        }
-
-        private void ReplaceWithLastResult()
-        {
-            fullExpression = lastResult.ToString();
-            answer_label.Text = "";
-            justCalculated = false;
-        }
-
-        private void AppendLastResult()
-        {
-            if (fullExpression == "0")
-                fullExpression = lastResult.ToString();
-            else
-                fullExpression += lastResult.ToString();
         }
         #endregion
 
@@ -543,17 +498,12 @@ namespace calculator
         {
             expression = ProcessSquares(expression);
             expression = NormalizeOperators(expression);
-
-            //// Remove trailing operators before evaluation
-            // expression = Regex.Replace(expression, @"[+\-*/]+$", "");
-
             object result = new DataTable().Compute(expression, null);
             return Convert.ToDouble(result);
         }
 
-        private static string ProcessSquares(string expression)
-        {
-            return Regex.Replace(
+        private static string ProcessSquares(string expression) =>
+            Regex.Replace(
                 expression,
                 @"(\d+(?:\.\d+)?)²",
                 m =>
@@ -562,17 +512,11 @@ namespace calculator
                     return (num * num).ToString();
                 }
             );
-        }
 
-        private static string NormalizeOperators(string expression)
-        {
-            return expression.Replace("×", "*").Replace("÷", "/");
-        }
+        private static string NormalizeOperators(string expression) =>
+            expression.Replace("×", "*").Replace("÷", "/");
 
-        private static string FormatResult(double result)
-        {
-            return result.ToString();
-        }
+        private static string FormatResult(double result) => result.ToString();
         #endregion
     }
 }
