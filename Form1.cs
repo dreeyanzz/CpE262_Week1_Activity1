@@ -352,6 +352,11 @@ namespace calculator
                 }
             }
 
+            if (input == "." && !numbers.Contains(fullExpression.Last().ToString()))
+            {
+                fullExpression += "0";
+            }
+
             string newText = BuildNewExpression(input);
 
             if (ShouldTrimBeforeOperator(input))
