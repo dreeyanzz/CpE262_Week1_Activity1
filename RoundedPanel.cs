@@ -75,8 +75,8 @@ namespace CustomControls
                 using (
                     GraphicsPath pathBorder = GetFigurePath(rectBorder, _cornerRadius - _borderSize)
                 )
-                using (Pen penSurface = new Pen(Parent?.BackColor ?? Color.Transparent, smoothSize))
-                using (Pen penBorder = new Pen(_borderColor, _borderSize))
+                using (Pen penSurface = new(Parent?.BackColor ?? Color.Transparent, smoothSize))
+                using (Pen penBorder = new(_borderColor, _borderSize))
                 {
                     Region = new Region(pathSurface);
                     e.Graphics.DrawPath(penSurface, pathSurface);
@@ -89,7 +89,7 @@ namespace CustomControls
                 Region = new Region(rectSurface);
                 if (_borderSize >= 1)
                 {
-                    using (Pen penBorder = new Pen(_borderColor, _borderSize))
+                    using (Pen penBorder = new(_borderColor, _borderSize))
                     {
                         penBorder.Alignment = PenAlignment.Inset;
                         e.Graphics.DrawRectangle(penBorder, 0, 0, Width - 1, Height - 1);
@@ -100,7 +100,7 @@ namespace CustomControls
 
         private GraphicsPath GetFigurePath(Rectangle rect, int radius)
         {
-            GraphicsPath path = new GraphicsPath();
+            GraphicsPath path = new();
             float curveSize = radius * 2F;
 
             path.StartFigure();

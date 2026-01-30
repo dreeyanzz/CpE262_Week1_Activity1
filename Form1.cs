@@ -61,6 +61,7 @@ namespace calculator
             { ".", "dot.png" },
             { "^", "up_button.png" },
             { "v", "down_button.png" },
+            { "+/-", "+-.png" },
         };
 
         private readonly List<List<string>> keys =
@@ -173,8 +174,17 @@ namespace calculator
             }
 
             // Create arrow buttons
-            keyboard.Controls.Add(CreateButton("^", 138, 16));
-            keyboard.Controls.Add(CreateButton("v", 253, 16));
+            ImageButton upButton = CreateButton("^", 138, 16);
+            ImageButton downButton = CreateButton("v", 253, 16);
+            ImageButton signToggleButton = CreateButton("+/-", 350 + 16, 12);
+
+            upButton.BackColor = Color.Transparent;
+            downButton.BackColor = Color.Transparent;
+            signToggleButton.BackColor = Color.Transparent;
+
+            keyboard.Controls.Add(upButton);
+            keyboard.Controls.Add(downButton);
+            keyboard.Controls.Add(signToggleButton);
         }
 
         private ImageButton CreateButton(string text, int x, int y)
@@ -306,7 +316,6 @@ namespace calculator
             // Block Ans button after n²
             if (buttonText == "Ans" && fullExpression.EndsWith("²"))
             {
-                // Do nothing - block the Ans button
                 return;
             }
 
@@ -325,6 +334,9 @@ namespace calculator
                 case "Ans":
                     HandleAnswer();
                     break;
+                case "+/-": // Add this case
+                    HandleToggleSign();
+                    break;
                 default:
                     if (displayable.Contains(buttonText))
                         HandleDisplayableInput(buttonText);
@@ -334,6 +346,86 @@ namespace calculator
         #endregion
 
         #region Input Handlers
+
+        private void HandleToggleSign()
+        {
+            // Handle the special case of just "0"
+            if (fullExpression == "0")
+            {
+                fullExpression = "-";
+                UpdateDisplay();
+                return;
+            }
+
+            // Special case: if expression is just "-", reset to "0"
+            if (fullExpression == "-")
+            {
+                fullExpression = "0";
+                UpdateDisplay();
+                return;
+            }
+
+            // Find the last operator index that's NOT inside parentheses
+            int lastOpIndex = -1;
+            int parenthesesDepth = 0;
+
+            for (int i = fullExpression.Length - 1; i >= 0; i--)
+            {
+                char c = fullExpression[i];
+
+                // Track parentheses depth from right to left
+                if (c == ')')
+                    parenthesesDepth++;
+                else if (c == '(')
+                    parenthesesDepth--;
+
+                // Only consider operators that are outside parentheses
+                if (parenthesesDepth == 0 && operators.Contains(c.ToString()))
+                {
+                    // Skip if it's a minus at the very beginning
+                    if (i == 0 && c == '-')
+                        continue;
+                    lastOpIndex = i;
+                    break;
+                }
+            }
+
+            // Split into prefix and last term
+            string prefix = lastOpIndex >= 0 ? fullExpression[..(lastOpIndex + 1)] : "";
+            string lastTerm =
+                lastOpIndex >= 0 ? fullExpression[(lastOpIndex + 1)..] : fullExpression;
+
+            // Remove all whitespace for easier processing
+            lastTerm = lastTerm.Trim();
+
+            // Unwrap ALL layers of negation wrappers to get the base number
+            string baseTerm = lastTerm;
+            int wrapperCount = 0;
+
+            while (baseTerm.StartsWith("(-") && baseTerm.EndsWith(")"))
+            {
+                baseTerm = baseTerm.Substring(2, baseTerm.Length - 3);
+                wrapperCount++;
+            }
+
+            // Toggle the sign: if there was an odd number of wrappers, remove them all
+            // If there was an even number (including 0), add one wrapper
+            if (wrapperCount % 2 == 1)
+            {
+                // Odd number of wrappers means it was negative, make it positive
+                lastTerm = baseTerm;
+            }
+            else
+            {
+                // Even number of wrappers (or no wrappers) means it was positive, make it negative
+                lastTerm = $"(-{baseTerm})";
+            }
+
+            // Reconstruct the expression
+            fullExpression = prefix + lastTerm;
+            UpdateDisplay();
+        }
+
         private void HandleUpArrow()
         {
             if (stmt_index > 0)
@@ -374,64 +466,6 @@ namespace calculator
                 fullExpression = "-";
                 UpdateDisplay();
                 return;
-            }
-
-            // Check if we already have (operator + minus) pattern FIRST
-            // If so, block ALL operator inputs including another minus
-            if (operators.Contains(input) && fullExpression.Length >= 2)
-            {
-                string lastChar = fullExpression[^1].ToString();
-                string secondLastChar = fullExpression[^2].ToString();
-
-                if (operators.Contains(secondLastChar) && lastChar == "-")
-                {
-                    // Pattern like +- or ×- exists, don't allow ANY more operators (including -)
-                    return;
-                }
-            }
-
-            // Handle double minus (convert to positive)
-            // This only runs if we DON'T have the operator+minus pattern from above
-            if (input == "-" && fullExpression.Length >= 1 && fullExpression.EndsWith("-"))
-            {
-                // Check what comes before the minus
-                if (fullExpression.Length == 1)
-                {
-                    // Just a single minus, reset to 0
-                    fullExpression = "0";
-                }
-                else
-                {
-                    // Replace the minus with a plus
-                    fullExpression = fullExpression[..^1] + "+";
-                }
-                UpdateDisplay();
-                return;
-            }
-
-            // Block consecutive operators - ONLY allow +-, ×-, ÷-
-            if (operators.Contains(input))
-            {
-                if (fullExpression.Length >= 1)
-                {
-                    string lastChar = fullExpression[^1].ToString();
-
-                    // If last character is an operator
-                    if (operators.Contains(lastChar))
-                    {
-                        // Only allow minus after +, ×, or ÷
-                        if (
-                            !(
-                                input == "-"
-                                && (lastChar == "+" || lastChar == "×" || lastChar == "÷")
-                            )
-                        )
-                        {
-                            // Block everything else
-                            return;
-                        }
-                    }
-                }
             }
 
             // Handle post-calculation input

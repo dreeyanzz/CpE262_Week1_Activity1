@@ -15,7 +15,7 @@ namespace CustomControls
         private bool isPressed = false;
         private string buttonText = "";
         private string text = ""; // Data holder for Text property
-        private Font textFont = new Font("Arial", 14, FontStyle.Bold);
+        private Font textFont = new("Arial", 14, FontStyle.Bold);
         private Color textColor = Color.White;
         private bool showText = true;
         private bool autoSizeToImage = false;
@@ -202,9 +202,9 @@ namespace CustomControls
             // Draw text if enabled
             if (showText && !string.IsNullOrEmpty(buttonText))
             {
-                using (SolidBrush textBrush = new SolidBrush(textColor))
+                using (SolidBrush textBrush = new(textColor))
                 {
-                    StringFormat sf = new StringFormat();
+                    StringFormat sf = new();
                     sf.Alignment = StringAlignment.Center;
                     sf.LineAlignment = StringAlignment.Center;
 
